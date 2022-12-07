@@ -1,5 +1,7 @@
 mod advent;
 mod day1;
+mod day2;
+
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -12,6 +14,7 @@ fn main() {
     println!("Hello, world! {}", day);
     match day {
         1 => day1::solve(),
+        2 => day2::solve(),
         _ => println!("That day isn't solved yet"),
     }
 }
