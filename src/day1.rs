@@ -1,7 +1,7 @@
 use crate::advent;
 
 
-pub(crate) fn solve() {
+pub fn solve() {
     let reader = advent::read_input(1);
     // reader.fold(Collectifier::new(), |a, b| a.fold(b.unwrap()));
     let elves = reader.fold(vec![0], |mut elves, calorie| {
