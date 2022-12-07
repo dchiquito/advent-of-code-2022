@@ -13,3 +13,9 @@ Cargo.lock
 # Added by cargo
 
 /target
+
+# The secret login token
+.cookie
+
+# The cached inputs
+inputs/
