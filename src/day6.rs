@@ -6,10 +6,13 @@ fn solver(sequential: usize) {
     let mut lines = advent::read_input(6);
     let line = lines.next().unwrap().unwrap();
     for i in sequential..line.len() {
-        let slice = line.substring(i-sequential, i);
+        let slice = line.substring(i - sequential, i);
         let mut duplicate = false;
         for j in 0..sequential {
-            if slice.substring(j+1, sequential).contains(slice.chars().nth(j).unwrap()) {
+            if slice
+                .substring(j + 1, sequential)
+                .contains(slice.chars().nth(j).unwrap())
+            {
                 duplicate = true;
             }
         }
