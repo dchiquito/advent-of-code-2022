@@ -32,7 +32,7 @@ pub fn solve() {
     // part 2
     let mut reader = advent::read_input(3);
     let mut sum = 0;
-    for i in (0..lines).step_by(3) {
+    for _i in (0..lines).step_by(3) {
         let a = reader.next().unwrap().unwrap();
         let b = reader.next().unwrap().unwrap();
         let c = reader.next().unwrap().unwrap();
