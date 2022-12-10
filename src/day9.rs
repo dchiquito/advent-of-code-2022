@@ -65,7 +65,6 @@ impl Snake {
         }
     }
     fn move_head_to(&self, x: i32, y: i32) -> Snake {
-        println!("MOVE HEAD TO {} {} {} {}", x, y, x - self.x, y - self.y);
         self.incr_head(x - self.x, y - self.y)
     }
     /**
@@ -149,7 +148,7 @@ fn showit(snakes: &Vec<Snake>, points: &HashSet<(i32, i32)>) {
         }
         println!("");
     }
-    println!("aaa");
+    println!("");
 }
 /*
 R 5
@@ -163,7 +162,7 @@ U 20
  */
 fn solve_2(moves: &Vec<Move>) {
     let mut snakes = vec![];
-    for _ in 0..10 {
+    for _ in 0..9 {
         snakes.push(Snake::new());
     }
     let mut points = HashSet::new();
@@ -174,13 +173,12 @@ fn solve_2(moves: &Vec<Move>) {
                 for _ in 0..*distance {
                     snakes[0] = snakes[0].go(direction);
                     for i in 1..snakes.len() {
-                        println!("move {:?} going {:?}", m, direction);
                         let (last_x, last_y) = snakes[i - 1].tail_position();
                         snakes[i] = snakes[i].move_head_to(last_x, last_y).scrunch();
                     }
                     points.insert(snakes.last().unwrap().tail_position());
                 }
-                showit(&snakes, &points);
+                // showit(&snakes, &points);
             }
         }
     }
@@ -195,8 +193,6 @@ pub fn solve() {
 
 #[cfg(test)]
 mod test {
-    use crate::day9::Direction;
-
     use super::Snake;
 
     #[test]
@@ -258,5 +254,21 @@ mod test {
         for dx in -1..1 {
             assert_eq!(make_snake(dx, dy).scrunch().tail_position(), (0, 1));
         }
+    }
+
+    #[test]
+    fn test_scrunchy_corner() {
+        fn make_snake(dx: i32, dy: i32) -> Snake {
+            Snake {
+                x: 0,
+                y: 0,
+                tail_dx: dx,
+                tail_dy: dy,
+            }
+        }
+        assert_eq!(make_snake(-2, -2).scrunch().tail_position(), (-1, -1));
+        assert_eq!(make_snake(-2, 2).scrunch().tail_position(), (-1, 1));
+        assert_eq!(make_snake(2, -2).scrunch().tail_position(), (1, -1));
+        assert_eq!(make_snake(2, 2).scrunch().tail_position(), (1, 1));
     }
 }
