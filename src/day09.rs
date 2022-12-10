@@ -127,6 +127,7 @@ fn solve_1(moves: &Vec<Move>) {
     }
     println!("{}", points.len());
 }
+#[allow(dead_code)]
 fn showit(snakes: &Vec<Snake>, points: &HashSet<(i32, i32)>) {
     let snakepoints: Vec<(i32, i32)> = snakes.iter().map(|snake| (snake.x, snake.y)).collect();
     for y in (-10..10).rev() {

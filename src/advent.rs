@@ -1,8 +1,11 @@
-use reqwest::{blocking::Client};
-use std::{fs::File, io::{Read, Write, BufReader, BufRead, Lines}};
+use reqwest::blocking::Client;
+use std::{
+    fs::File,
+    io::{BufRead, BufReader, Lines, Read, Write},
+};
 
-fn input_file_path(day:i32) -> String {
-    format!("inputs/{}.txt", day)
+fn input_file_path(day: i32) -> String {
+    format!("inputs/{:0>2}.txt", day)
 }
 
 fn get_secret() -> String {
@@ -22,8 +25,11 @@ fn download_input(day: i32) {
     let client = Client::new();
     let text = client
         .get(format!("https://adventofcode.com/2022/day/{}/input", day))
-        .header("Cookie", format!("session={}", secret)).send().unwrap()
-        .text().unwrap();
+        .header("Cookie", format!("session={}", secret))
+        .send()
+        .unwrap()
+        .text()
+        .unwrap();
     write_input_file(day, &text);
 }
 
