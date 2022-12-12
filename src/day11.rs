@@ -135,8 +135,7 @@ fn monkey_business(monkeys: &Vec<Monkey>) -> u64 {
 
 pub fn solve() {
     // part 1
-    let (mut monkeys, modulus) = get_monkeys();
-    println!("{}", modulus);
+    let (mut monkeys, _modulus) = get_monkeys();
     for _ in 0..20 {
         Monkey::round_1(&mut monkeys);
     }
