@@ -9,6 +9,7 @@ mod day07;
 mod day08;
 mod day09;
 mod day10;
+mod day11;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -29,6 +30,7 @@ fn main() {
         8 => day08::solve(),
         9 => day09::solve(),
         10 => day10::solve(),
+        11 => day11::solve(),
         _ => println!("That day isn't solved yet"),
     }
 }
