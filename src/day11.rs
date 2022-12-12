@@ -14,24 +14,31 @@ impl Operation {
             _ => panic!("Unknown operator {}", c),
         }
     }
-    fn apply(&self, left: u32, right: Option<u32>) -> u32 {
+    fn apply(&self, left: u64, right: Option<u64>) -> u64 {
         let right = right.unwrap_or(left);
         match self {
             Operation::ADD => left + right,
             Operation::MULTIPLY => left * right,
         }
     }
+    fn apply_mod(&self, left: u64, right: Option<u64>, modulus: u64) -> u64 {
+        let right = right.unwrap_or(left);
+        match self {
+            Operation::ADD => (left % modulus) + (right % modulus),
+            Operation::MULTIPLY => (left % modulus) * (right % modulus),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
 struct Monkey {
-    items: Vec<u32>,
+    items: Vec<u64>,
     operation: Operation,
-    operand: Option<u32>,
-    divisor: u32,
+    operand: Option<u64>,
+    divisor: u64,
     true_target: usize,
     false_target: usize,
-    inspections: u32,
+    inspections: u64,
 }
 
 impl Monkey {
@@ -39,7 +46,7 @@ impl Monkey {
         Monkey {
             items: (&capture[1])
                 .split(", ")
-                .map(str::parse::<u32>)
+                .map(str::parse::<u64>)
                 .map(Result::unwrap)
                 .collect(),
             operation: Operation::from(&capture[2]),
@@ -54,7 +61,7 @@ impl Monkey {
         for i in 0..monkeys.len() {
             while !monkeys[i].items.is_empty() {
                 let monkey: Monkey;
-                let item: u32;
+                let item: u64;
                 {
                     let mut_monkey = &mut monkeys[i];
                     item = mut_monkey.items.remove(0);
@@ -71,18 +78,18 @@ impl Monkey {
             }
         }
     }
-    fn round_2(monkeys: &mut Vec<Monkey>) {
+    fn round_2(monkeys: &mut Vec<Monkey>, modulus: u64) {
         for i in 0..monkeys.len() {
             while !monkeys[i].items.is_empty() {
                 let monkey: Monkey;
-                let item: u32;
+                let item: u64;
                 {
                     let mut_monkey = &mut monkeys[i];
                     item = mut_monkey.items.remove(0);
                     mut_monkey.inspections += 1;
                     monkey = mut_monkey.clone();
                 }
-                let item = monkey.operation.apply(item, monkey.operand);
+                let item = monkey.operation.apply_mod(item, monkey.operand, modulus);
                 // no reductions now
                 // let item = item / 3;
                 if item % monkey.divisor == 0 {
@@ -95,16 +102,22 @@ impl Monkey {
     }
 }
 
-fn get_monkeys() -> Vec<Monkey> {
+fn get_monkeys() -> (Vec<Monkey>, u64) {
     let file = advent::read_input(11)
         .map(Result::unwrap)
         .reduce(|a, b| a + "\n" + &b)
         .unwrap();
     let monkey_re = Regex::new(r"Monkey [0-9]:\n  Starting items: ([0-9, ]+)\n  Operation: new = old ([\*\+]) ([0-9old]+)\n  Test: divisible by ([0-9]+)\n    If true: throw to monkey ([0-9])\n    If false: throw to monkey ([0-9])").unwrap();
-    monkey_re.captures_iter(&file).map(Monkey::new).collect()
+    let monkeys: Vec<Monkey> = monkey_re.captures_iter(&file).map(Monkey::new).collect();
+    let modulus = monkeys
+        .iter()
+        .map(|m| m.divisor)
+        .reduce(|a, b| a * b)
+        .unwrap();
+    (monkeys, modulus)
 }
 
-fn monkey_business(monkeys: &Vec<Monkey>) -> u32 {
+fn monkey_business(monkeys: &Vec<Monkey>) -> u64 {
     let mut max_inspections_1 = 0;
     for monkey in monkeys.iter() {
         if monkey.inspections > max_inspections_1 {
@@ -122,16 +135,17 @@ fn monkey_business(monkeys: &Vec<Monkey>) -> u32 {
 
 pub fn solve() {
     // part 1
-    let mut monkeys = get_monkeys();
+    let (mut monkeys, modulus) = get_monkeys();
+    println!("{}", modulus);
     for _ in 0..20 {
         Monkey::round_1(&mut monkeys);
     }
     println!("{}", monkey_business(&monkeys));
 
     // part 2
-    let mut monkeys = get_monkeys();
-    for _ in 0..20 {
-        Monkey::round_2(&mut monkeys);
+    let (mut monkeys, modulus) = get_monkeys();
+    for _ in 0..10000 {
+        Monkey::round_2(&mut monkeys, modulus);
     }
     println!("{}", monkey_business(&monkeys));
 }
