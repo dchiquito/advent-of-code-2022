@@ -5,7 +5,7 @@ fn run_cpu() -> Vec<i32> {
     let lines = advent::read_input(10);
     let mut x = 1;
     let mut values = vec![];
-    for line in lines.map(Result::unwrap) {
+    for line in lines.iter() {
         if line == "noop" {
             values.push(x);
         } else {

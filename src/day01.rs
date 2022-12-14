@@ -1,20 +1,19 @@
 use crate::advent;
 
-
 pub fn solve() {
-    let reader = advent::read_input(1);
     // reader.fold(Collectifier::new(), |a, b| a.fold(b.unwrap()));
-    let elves = reader.fold(vec![0], |mut elves, calorie| {
-        let calorie = calorie.unwrap();
-        if calorie == "" {
-            elves.push(0);
-        } else {
-            let new_calories = elves.pop().unwrap() + str::parse::<i32>(&calorie).unwrap();
-            elves.push(new_calories);
-        }
-        elves
-    });
-    
+    let elves = advent::read_input(1)
+        .iter()
+        .fold(vec![0], |mut elves, calorie| {
+            if calorie == "" {
+                elves.push(0);
+            } else {
+                let new_calories = elves.pop().unwrap() + str::parse::<i32>(&calorie).unwrap();
+                elves.push(new_calories);
+            }
+            elves
+        });
+
     let mut max_elf = 0;
     for elf in elves.iter() {
         if *elf > max_elf {

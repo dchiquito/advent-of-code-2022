@@ -103,10 +103,7 @@ impl Monkey {
 }
 
 fn get_monkeys() -> (Vec<Monkey>, u64) {
-    let file = advent::read_input(11)
-        .map(Result::unwrap)
-        .reduce(|a, b| a + "\n" + &b)
-        .unwrap();
+    let file = advent::read_input(11).join("\n");
     let monkey_re = Regex::new(r"Monkey [0-9]:\n  Starting items: ([0-9, ]+)\n  Operation: new = old ([\*\+]) ([0-9old]+)\n  Test: divisible by ([0-9]+)\n    If true: throw to monkey ([0-9])\n    If false: throw to monkey ([0-9])").unwrap();
     let monkeys: Vec<Monkey> = monkey_re.captures_iter(&file).map(Monkey::new).collect();
     let modulus = monkeys

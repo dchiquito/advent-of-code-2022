@@ -1,7 +1,7 @@
 use reqwest::blocking::Client;
 use std::{
     fs::File,
-    io::{BufRead, BufReader, Lines, Read, Write},
+    io::{BufRead, BufReader, Read, Write},
 };
 
 fn input_file_path(day: i32) -> String {
@@ -33,10 +33,10 @@ fn download_input(day: i32) {
     write_input_file(day, &text);
 }
 
-pub fn read_input(day: i32) -> Lines<BufReader<File>> {
+pub fn read_input(day: i32) -> Vec<String> {
     if !std::path::Path::new(&input_file_path(day)).exists() {
         download_input(day);
     }
     let f = File::open(input_file_path(day)).unwrap();
-    BufReader::new(f).lines()
+    BufReader::new(f).lines().map(Result::unwrap).collect()
 }

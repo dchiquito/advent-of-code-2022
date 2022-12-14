@@ -20,7 +20,7 @@ struct Row {
     r: XYZ,
 }
 impl Row {
-    fn parse(line: String) -> Row {
+    fn parse(line: &str) -> Row {
         let re: Regex = Regex::new(r"^([A-C]) ([X-Z])$").unwrap();
         let captures = re.captures(&line).unwrap();
         let abc = &captures[1];
@@ -80,14 +80,14 @@ impl Row {
                 XYZ::X => 0 + 2,
                 XYZ::Y => 3 + 3,
                 XYZ::Z => 6 + 1,
-            }
+            },
         }
     }
 }
 
 pub fn solve() {
     let reader = advent::read_input(2);
-    let rows : Vec<Row> = reader.map(|line| Row::parse(line.unwrap())).collect();
+    let rows: Vec<Row> = reader.iter().map(|line| Row::parse(line)).collect();
 
     // Part 1
     let sum_1 = rows.iter().fold(0, |acc, row| acc + row.score_1());

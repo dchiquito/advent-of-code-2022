@@ -29,8 +29,8 @@ struct Move(Direction, i32);
 fn read_input() -> Vec<Move> {
     let lines = advent::read_input(9);
     lines
+        .iter()
         .map(|line| {
-            let line = line.unwrap();
             Move(
                 Direction::from(line.substring(0, 1)),
                 line.substring(2, 4).parse().unwrap(),

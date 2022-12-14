@@ -42,7 +42,7 @@ type Grid = Vec<Vec<Cell>>;
 
 fn read_grid() -> (Grid, (usize, usize), (usize, usize)) {
     let grid: Vec<Vec<char>> = advent::read_input(12)
-        .map(Result::unwrap)
+        .iter()
         .map(|line| line.chars().collect::<Vec<char>>())
         .collect();
     let mut start = (0, 0);

@@ -61,8 +61,8 @@ fn load_initial_yard() -> Yard {
         yard.stacks.push(Stack::new())
     }
     let reader = advent::read_input(5);
-    for line in reader {
-        let line = line.unwrap() + " ";
+    for line in reader.iter() {
+        let line = line.to_string() + " ";
         if line == " " {
             break;
         }
@@ -84,8 +84,7 @@ pub fn solve() {
     // Borrowing is hard, so just read the damn file twice
     let move_re = Regex::new(r"move ([0-9]+) from ([1-9]) to ([1-9])").unwrap();
     let reader = advent::read_input(5);
-    for line in reader {
-        let line = line.unwrap();
+    for line in reader.iter() {
         if let Some(captures) = move_re.captures(&line) {
             let num = str::parse::<i32>(&captures[1]).unwrap();
             let from = str::parse::<usize>(&captures[2]).unwrap() - 1;
@@ -95,12 +94,10 @@ pub fn solve() {
     }
     println!("{}", yard.repr());
 
-
     // two more reads for part 2 bby
     let mut yard = load_initial_yard();
     let reader = advent::read_input(5);
-    for line in reader {
-        let line = line.unwrap();
+    for line in reader.iter() {
         if let Some(captures) = move_re.captures(&line) {
             let num = str::parse::<i32>(&captures[1]).unwrap();
             let from = str::parse::<usize>(&captures[2]).unwrap() - 1;

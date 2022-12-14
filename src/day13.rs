@@ -105,7 +105,8 @@ impl Expr {
 }
 
 fn solve_1() {
-    let mut lines = advent::read_input(13).map(Result::unwrap);
+    let file = advent::read_input(13);
+    let mut lines = file.iter();
     let mut index = 1;
     let mut sum = 0;
     loop {
@@ -125,7 +126,8 @@ fn solve_1() {
 }
 
 fn solve_2() {
-    let mut lines = advent::read_input(13).map(Result::unwrap);
+    let file = advent::read_input(13);
+    let mut lines = file.iter();
     let mut exprs = vec![];
     loop {
         let l1 = lines.next().unwrap();

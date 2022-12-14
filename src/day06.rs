@@ -3,8 +3,7 @@ use substring::Substring;
 use crate::advent;
 
 fn solver(sequential: usize) {
-    let mut lines = advent::read_input(6);
-    let line = lines.next().unwrap().unwrap();
+    let line = &advent::read_input(6)[0];
     for i in sequential..line.len() {
         let slice = line.substring(i - sequential, i);
         let mut duplicate = false;

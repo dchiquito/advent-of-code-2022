@@ -67,11 +67,11 @@ impl File {
 fn build_fs() -> Dir {
     let file_re = Regex::new(r"^([0-9]+) ([a-z\.]+)$").unwrap();
     let dir_re = Regex::new(r"^dir ([a-z]+)$").unwrap();
-    let mut lines = advent::read_input(7);
+    let lines = advent::read_input(7);
+    let mut iter = lines.iter();
     let mut root = Dir::new("/");
     let mut path: Vec<String> = vec![];
-    while let Some(line) = lines.next() {
-        let line = line.unwrap();
+    while let Some(line) = iter.next() {
         match line.as_str() {
             "$ cd .." => {
                 path.pop();

@@ -42,7 +42,7 @@ impl Dimensions {
 fn parse_lines() -> Rocks {
     let re = Regex::new(r"(\d+),(\d+)").unwrap();
     advent::read_input(14)
-        .map(Result::unwrap)
+        .iter()
         .map(|line| {
             re.captures_iter(&line)
                 .map(|capture| (capture[1].parse().unwrap(), capture[2].parse().unwrap()))

@@ -20,7 +20,7 @@ type Croft = Vec<Vec<Tree>>;
 fn load_data() -> Croft {
     let lines = advent::read_input(8);
     lines
-        .map(Result::unwrap)
+        .iter()
         .map(|line| {
             line.chars()
                 .map(|c| Tree::new(c.to_digit(10).unwrap()))

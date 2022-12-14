@@ -31,10 +31,8 @@ pub fn solve() {
     let reader = advent::read_input(4);
     let re: Regex = Regex::new(r"^([0-9]+)-([0-9]+),([0-9]+)-([0-9]+)$").unwrap();
     let rows: Vec<Row> = reader
-        .map(|line| {
-            let line = line.unwrap();
-            Row::new(re.captures(&line).unwrap())
-        })
+        .iter()
+        .map(|line| Row::new(re.captures(&line).unwrap()))
         .collect();
     let nested = rows
         .iter()
