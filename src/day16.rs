@@ -128,28 +128,27 @@ fn solve_1(graph: &Graph, time_limit: u32) {
             .reduce(u32::add)
             .unwrap_or(0);
         let node = graph.nodes.get(id).unwrap();
-        let valid_edges: Vec<(String, u32)> = node
-            .edges
-            .iter()
-            .filter(|(adj_id, _)| !visited.contains(adj_id))
-            .map(|(adj_id, distance)| (adj_id.clone(), *distance))
-            .collect();
-        if valid_edges.is_empty() {
-            visited.pop();
-            return (time_limit - time) * flow_per_tick;
+
+        // default is just waiting until time expires
+        let mut max_flow = (time_limit - time) * flow_per_tick;
+        for (adj_id, distance) in node.edges.iter() {
+            if visited.contains(adj_id) {
+                // already visited that node, can't turn it on again
+                continue;
+            }
+            let flow;
+            if distance + 1 >= time_limit - time {
+                // it would take too long to turn it on
+                flow = flow_per_tick * (time_limit - time);
+            } else {
+                // flow while we walk there and turn on the valve + recursion
+                flow = (flow_per_tick * (distance + 1))
+                    + visit(graph, adj_id, time + distance + 1, time_limit, visited);
+            }
+            if flow > max_flow {
+                max_flow = flow;
+            }
         }
-        let max_flow = valid_edges
-            .iter()
-            .map(|(adj_id, distance)| {
-                if visited.contains(adj_id) {
-                    0
-                } else {
-                    (flow_per_tick * (distance + 1).min(time_limit - time))
-                        + visit(graph, adj_id, time + distance + 1, time_limit, visited)
-                }
-            })
-            .reduce(|a, b| a.max(b))
-            .unwrap();
         visited.pop();
         max_flow
     }
