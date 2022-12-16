@@ -40,7 +40,7 @@ fn parse_rooms() -> HashMap<String, Room> {
     rooms
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Node {
     name: String,
     id: u32,
@@ -90,7 +90,7 @@ impl Node {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Graph {
     nodes: HashMap<u32, Node>,
 }
@@ -156,8 +156,92 @@ fn solve_1(graph: &Graph, time_limit: u32) {
     );
 }
 
+fn max_flow(graph: &Graph, time_limit: u32, ban_list: &Vec<u32>) -> u32 {
+    let mut visited = vec![];
+    fn visit(graph: &Graph, id: u32, time: u32, time_limit: u32, visited: &mut Vec<u32>) -> u32 {
+        if time > time_limit {
+            return 0;
+        }
+        visited.push(id);
+        let flow_per_tick = visited
+            .iter()
+            .map(|i| graph.nodes.get(i).unwrap().flow)
+            .reduce(u32::add)
+            .unwrap_or(0);
+        let node = graph.nodes.get(&id).unwrap();
+
+        // default is just waiting until time expires
+        let mut max_flow = (time_limit - time) * flow_per_tick;
+        for (adj_id, distance) in node.edges.iter() {
+            if visited.contains(adj_id) {
+                // already visited that node, can't turn it on again
+                continue;
+            }
+            let flow;
+            if distance + 1 >= time_limit - time {
+                // it would take too long to turn it on
+                flow = flow_per_tick * (time_limit - time);
+            } else {
+                // flow while we walk there and turn on the valve + recursion
+                flow = (flow_per_tick * (distance + 1))
+                    + visit(graph, *adj_id, time + distance + 1, time_limit, visited);
+            }
+            if flow > max_flow {
+                max_flow = flow;
+            }
+        }
+        visited.pop();
+        max_flow
+    }
+    // prune unvisitable nodes
+    let mut graph = graph.clone();
+    for ban in ban_list.iter() {
+        graph.nodes.remove(ban);
+    }
+    for (_id, node) in graph.nodes.iter_mut() {
+        for ban in ban_list.iter() {
+            node.edges.remove(ban);
+        }
+    }
+    visit(&graph, Node::idcode("AA"), 0, time_limit, &mut visited)
+}
+
+fn solve_2(graph: &Graph) {
+    fn test_ban_lists(
+        graph: &Graph,
+        a: &mut Vec<u32>,
+        b: &mut Vec<u32>,
+        nodes: &mut Vec<u32>,
+    ) -> u32 {
+        if let Some(node_id) = nodes.pop() {
+            a.push(node_id);
+            let x = test_ban_lists(graph, a, b, nodes);
+            b.push(a.pop().unwrap());
+            let y = test_ban_lists(graph, a, b, nodes);
+            nodes.push(b.pop().unwrap());
+            x.max(y)
+        } else {
+            let x = max_flow(graph, 26, a);
+            let y = max_flow(graph, 26, b);
+            x + y
+        }
+    }
+    let aa = Node::idcode("AA");
+    let mut node_ids: Vec<u32> = graph
+        .nodes
+        .keys()
+        .filter(|k| k != &&aa)
+        .map(|k| *k)
+        .collect();
+    let mut a: Vec<u32> = vec![];
+    let mut b: Vec<u32> = vec![];
+    println!("{}", test_ban_lists(graph, &mut a, &mut b, &mut node_ids));
+}
+
 pub fn solve() {
     let rooms = parse_rooms();
     let graph = Graph::new(&rooms);
     solve_1(&graph, 30);
+
+    solve_2(&graph);
 }
