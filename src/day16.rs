@@ -6,14 +6,14 @@ use regex::Regex;
 
 #[derive(Debug, Clone)]
 struct Room {
-    id: String,
+    name: String,
     flow: u32,
     tunnels: Vec<String>,
 }
 
 impl Room {
     fn is_important(&self) -> bool {
-        self.flow > 0 || self.id == "AA"
+        self.flow > 0 || self.name == "AA"
     }
 }
 
@@ -29,56 +29,62 @@ fn parse_rooms() -> HashMap<String, Room> {
         .map(|line| {
             let capture = re.captures(line).unwrap();
             Room {
-                id: capture[1].into(),
+                name: capture[1].into(),
                 flow: capture[2].parse().unwrap(),
                 tunnels: capture[3].split(", ").map(str::to_string).collect(),
             }
         })
         .for_each(|room| {
-            rooms.insert(room.id.to_string(), room.clone());
+            rooms.insert(room.name.to_string(), room.clone());
         });
     rooms
 }
 
 #[derive(Debug)]
 struct Node {
-    id: String,
+    name: String,
+    id: u32,
     flow: u32,
-    edges: HashMap<String, u32>,
+    edges: HashMap<u32, u32>,
 }
 
 impl Node {
     fn new(room: &Room) -> Node {
         Node {
-            id: room.id.clone(),
+            name: room.name.clone(),
+            id: Node::idcode(&room.name),
             flow: room.flow,
             edges: HashMap::new(),
         }
     }
+    fn idcode(name: &str) -> u32 {
+        let charcodes = name.chars().map(|c| c as u32).collect::<Vec<u32>>();
+        &charcodes[0] * 128 + &charcodes[1]
+    }
     fn calculate_distances(&mut self, rooms: &HashMap<String, Room>) {
         fn visit(
             rooms: &HashMap<String, Room>,
-            id: &str,
+            name: &str,
             distance: u32,
             distances: &mut HashMap<String, u32>,
         ) {
-            let room = rooms.get(id).unwrap();
-            if let Some(previous_distance) = distances.get(id) {
+            let room = rooms.get(name).unwrap();
+            if let Some(previous_distance) = distances.get(name) {
                 if &distance >= previous_distance {
                     return;
                 }
             }
-            distances.insert(id.to_string(), distance);
+            distances.insert(name.to_string(), distance);
             for adjacent in room.tunnels.iter() {
                 visit(rooms, adjacent, distance + 1, distances);
             }
         }
         let mut distances = HashMap::<String, u32>::new();
-        visit(rooms, &self.id, 0, &mut distances);
-        for (id, room) in rooms.iter() {
-            if room.flow > 0 && id != &self.id {
+        visit(rooms, &self.name, 0, &mut distances);
+        for (name, room) in rooms.iter() {
+            if room.flow > 0 && name != &self.name {
                 self.edges
-                    .insert(id.to_string(), *distances.get(id).unwrap());
+                    .insert(Node::idcode(name), *distances.get(name).unwrap());
             }
         }
     }
@@ -86,7 +92,7 @@ impl Node {
 
 #[derive(Debug)]
 struct Graph {
-    nodes: HashMap<String, Node>,
+    nodes: HashMap<u32, Node>,
 }
 
 impl Graph {
@@ -96,7 +102,8 @@ impl Graph {
         };
         for (_, room) in rooms.iter() {
             if room.is_important() {
-                graph.nodes.insert(room.id.clone(), Node::new(room));
+                let node = Node::new(room);
+                graph.nodes.insert(node.id, Node::new(room));
             }
         }
         for (_id, node) in graph.nodes.iter_mut() {
@@ -107,27 +114,18 @@ impl Graph {
 }
 
 fn solve_1(graph: &Graph, time_limit: u32) {
-    for (_, node) in graph.nodes.iter() {
-        println!("{} {} {:?}", node.id, node.flow, node.edges);
-    }
     let mut visited = vec![];
-    fn visit(
-        graph: &Graph,
-        id: &str,
-        time: u32,
-        time_limit: u32,
-        visited: &mut Vec<String>,
-    ) -> u32 {
+    fn visit(graph: &Graph, id: u32, time: u32, time_limit: u32, visited: &mut Vec<u32>) -> u32 {
         if time > time_limit {
             return 0;
         }
-        visited.push(id.to_string());
+        visited.push(id);
         let flow_per_tick = visited
             .iter()
             .map(|i| graph.nodes.get(i).unwrap().flow)
             .reduce(u32::add)
             .unwrap_or(0);
-        let node = graph.nodes.get(id).unwrap();
+        let node = graph.nodes.get(&id).unwrap();
 
         // default is just waiting until time expires
         let mut max_flow = (time_limit - time) * flow_per_tick;
@@ -143,7 +141,7 @@ fn solve_1(graph: &Graph, time_limit: u32) {
             } else {
                 // flow while we walk there and turn on the valve + recursion
                 flow = (flow_per_tick * (distance + 1))
-                    + visit(graph, adj_id, time + distance + 1, time_limit, visited);
+                    + visit(graph, *adj_id, time + distance + 1, time_limit, visited);
             }
             if flow > max_flow {
                 max_flow = flow;
@@ -152,7 +150,10 @@ fn solve_1(graph: &Graph, time_limit: u32) {
         visited.pop();
         max_flow
     }
-    println!("{}", visit(graph, "AA", 0, time_limit, &mut visited));
+    println!(
+        "{}",
+        visit(graph, Node::idcode("AA"), 0, time_limit, &mut visited)
+    );
 }
 
 pub fn solve() {
