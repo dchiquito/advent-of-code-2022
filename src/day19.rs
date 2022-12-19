@@ -1,9 +1,10 @@
 use regex::Regex;
 use std::ops::Add;
+use std::ops::Mul;
 
 use crate::advent;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 enum Material {
     Ore,
     Clay,
@@ -44,7 +45,7 @@ fn read_blueprints() -> Vec<Blueprint> {
         .collect()
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct State {
     tick: u32,
     ore: u32,
@@ -71,7 +72,7 @@ impl State {
             geode_robots: 0,
         }
     }
-    fn can_build(&self, blueprint: &Blueprint, material: Material) -> bool {
+    fn can_build(&self, blueprint: &Blueprint, material: &Material) -> bool {
         match material {
             Material::Ore => self.ore >= blueprint.ore,
             Material::Clay => self.ore >= blueprint.clay && self.clay_robots < blueprint.obsidian.1,
@@ -83,7 +84,7 @@ impl State {
             Material::Geode => self.ore >= blueprint.geode.0 && self.obsidian >= blueprint.geode.1,
         }
     }
-    fn build(&mut self, blueprint: &Blueprint, material: Material) {
+    fn build(&mut self, blueprint: &Blueprint, material: &Material) {
         match material {
             Material::Ore => {
                 self.ore -= blueprint.ore;
@@ -105,9 +106,9 @@ impl State {
             }
         }
     }
-    fn minute(&self, blueprint: &Blueprint, material: Option<Material>) -> State {
+    fn minute(&self, blueprint: &Blueprint, material: &Option<Material>) -> State {
         if let Some(material) = material {
-            let mut state = self.minute(blueprint, None);
+            let mut state = self.minute(blueprint, &None);
             state.build(blueprint, material);
             state
         } else {
@@ -124,93 +125,95 @@ impl State {
             }
         }
     }
-    fn heuristic(&self, _blueprint: &Blueprint) -> u32 {
-        let ticks = 24 - self.tick;
+    fn heuristic(&self, _blueprint: &Blueprint, depth: u32) -> u32 {
+        let ticks = depth - self.tick;
         let geodes = self.geodes + (self.geode_robots * ticks) + (0..ticks).fold(0, u32::add);
         geodes
     }
 }
 
-fn find_max_geodes(blueprint: &Blueprint, state: &State, best_so_far: u32) -> u32 {
-    //println!(
-    //    "finding {:?} {} {}",
-    //    state,
-    //    best_so_far,
-    //    state.heuristic(blueprint)
-    //);
-    if state.tick > 23 {
-        // println!("Bottomed out {:?}", state);
-        state.geodes
-    } else if state.heuristic(blueprint) < best_so_far {
-        //println!("abort {:?}", state);
-        0
-    } else {
-        let mut max_geodes = best_so_far;
-        if state.can_build(blueprint, Material::Geode) {
-            max_geodes = max_geodes.max(find_max_geodes(
-                blueprint,
-                &state.minute(blueprint, Some(Material::Geode)),
-                max_geodes,
-            ));
+fn find_max_geodes(blueprint: &Blueprint, depth: u32) -> u32 {
+    let max_ore_robots = blueprint
+        .ore
+        .max(blueprint.clay)
+        .max(blueprint.obsidian.0)
+        .max(blueprint.geode.0);
+    let max_clay_robots = blueprint.obsidian.1;
+    let max_obsidian_robots = blueprint.geode.1;
+    println!(
+        "{} {} {}",
+        max_ore_robots, max_clay_robots, max_obsidian_robots
+    );
+    let mut stack: Vec<State> = Vec::new();
+    stack.push(State::new());
+    let mut max_geodes = 0;
+    while let Some(state) = stack.pop() {
+        // println!("Stackin up {:?}", state);
+        if state.tick == depth {
+            max_geodes = max_geodes.max(state.geodes);
+            continue;
         }
-        if state.can_build(blueprint, Material::Obsidian) {
-            max_geodes = max_geodes.max(find_max_geodes(
-                blueprint,
-                &state.minute(blueprint, Some(Material::Obsidian)),
-                max_geodes,
-            ));
+        if state.heuristic(blueprint, depth) < max_geodes {
+            continue;
         }
-        if state.can_build(blueprint, Material::Clay) {
-            max_geodes = max_geodes.max(find_max_geodes(
-                blueprint,
-                &state.minute(blueprint, Some(Material::Clay)),
-                max_geodes,
-            ));
+        stack.push(state.minute(blueprint, &None));
+        for material in vec![
+            Material::Ore,
+            Material::Clay,
+            Material::Obsidian,
+            Material::Geode,
+        ] {
+            // don't bother with geodes if there are no obsidian bots
+            if (material == Material::Geode && state.obsidian_robots == 0) ||
+            // don't bother with obsidian if there are no clay bots or we already have enough
+            (material == Material::Obsidian
+                && (state.clay_robots == 0 || state.obsidian_robots >= max_obsidian_robots)) ||
+            // don't bother with clay if there are already enough
+            (material == Material::Clay && state.clay_robots >= max_clay_robots) || 
+            // don't bother with ore if there are already enough
+            (material == Material::Ore && state.ore_robots >= max_ore_robots) {
+                break;
+            }
+            let mut temp_state = state.clone();
+            // wait until the material is buildable
+            while !temp_state.can_build(blueprint, &material) {
+                temp_state = temp_state.minute(blueprint, &None);
+            }
+            temp_state = temp_state.minute(blueprint, &Some(material));
+            // check to make sure we haven't waited until after the max depth
+            if temp_state.tick <= depth {
+                stack.push(temp_state);
+            }
         }
-        if state.can_build(blueprint, Material::Ore) {
-            max_geodes = max_geodes.max(find_max_geodes(
-                blueprint,
-                &state.minute(blueprint, Some(Material::Ore)),
-                max_geodes,
-            ));
-        }
-        {
-            max_geodes = max_geodes.max(find_max_geodes(
-                blueprint,
-                &state.minute(blueprint, None),
-                best_so_far,
-            ));
-        }
-        if max_geodes == 100 {
-            println!(
-                "{} [{} {} {} {}] robots [{} {} {} {}] {}",
-                state.tick,
-                state.ore,
-                state.clay,
-                state.obsidian,
-                state.geodes,
-                state.ore_robots,
-                state.clay_robots,
-                state.obsidian_robots,
-                state.geode_robots,
-                state.heuristic(blueprint),
-            );
-        }
-        max_geodes
     }
+    max_geodes
 }
 fn solve_1() -> u32 {
     let blueprints = read_blueprints();
-    let state = State::new();
     let mut total_quality = 0;
     for blueprint in blueprints.iter() {
-        let geodes = find_max_geodes(blueprint, &state, 0);
+        let geodes = find_max_geodes(blueprint, 24);
         println!("{:?} {}", blueprint, geodes);
         total_quality += blueprint.id * geodes;
     }
     total_quality
 }
+
+fn solve_2() -> u32 {
+    let blueprints = read_blueprints();
+    blueprints
+        .iter()
+        .take(3)
+        .map(|blueprint| {
+            let g = find_max_geodes(blueprint, 32);
+            println!("{:?} -> {}", blueprint, g);
+            g
+        })
+        .fold(1, u32::mul)
+}
 pub fn solve() {
-    // runs in 5.5 minutes :(
+    // runs in 81 seconds
+    // also it's wrong :((((
     println!("{}", solve_1());
+    // println!("{}", solve_2());
 }
