@@ -199,7 +199,7 @@ fn solve_1() -> u32 {
     total_quality
 }
 
-fn solve_2() -> u32 {
+fn _solve_2() -> u32 {
     let blueprints = read_blueprints();
     blueprints
         .iter()
