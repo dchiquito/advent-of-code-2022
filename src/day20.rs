@@ -14,13 +14,6 @@ impl LList {
             links: Vec::new(),
         }
     }
-    fn from(source: &Vec<i64>) -> LList {
-        let mut list = LList::new();
-        for i in source.iter() {
-            list.push(*i);
-        }
-        list
-    }
     fn push(&mut self, value: i64) {
         self.nodes.push(value);
         let len = self.nodes.len();
