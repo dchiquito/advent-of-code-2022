@@ -38,7 +38,6 @@ impl Proposal {
         }
     }
     fn propose(&mut self, pos: &Pos, dir: &Dir) {
-        self.origin = pos.clone();
         self.proposal = Some((dir.clone(), dir.incr(pos)));
     }
     fn idle(&mut self, pos: &Pos) {
