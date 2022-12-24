@@ -98,6 +98,7 @@ fn traverse(valley: &mut Valley, start: &Pos, end: &Pos) -> u32 {
         valley.tick();
         minutes += 1;
         let mut new_superpositions = HashSet::new();
+        // You can always hang out outside the starting area and jump
         if valley.blizzard_grid[start.1][start.0] == 0 {
             new_superpositions.insert(*start);
         }
@@ -143,7 +144,21 @@ fn solve_2() -> u32 {
         + traverse(&mut valley, &(width, height), &(0, 0))
         + traverse(&mut valley, &(0, 0), &(width, height))
 }
+/// https://old.reddit.com/r/adventofcode/comments/zu4uee/2022_day_24_part_3_can_you_solve_this_harder/
+fn solve_3() -> u64 {
+    let lines = advent::read_input(24);
+    let mut valley = Valley::new(lines);
+    let width = valley.width - 1;
+    let height = valley.height - 1;
+    let mut minutes = traverse(&mut valley, &(0, 0), &(width, height)) as u64;
+    for _ in 0..1 {
+        minutes += traverse(&mut valley, &(width, height), &(0, 0)) as u64;
+        minutes += traverse(&mut valley, &(0, 0), &(width, height)) as u64;
+    }
+    minutes
+}
 pub fn solve() {
     println!("{}", solve_1());
     println!("{}", solve_2());
+    println!("{}", solve_3());
 }
