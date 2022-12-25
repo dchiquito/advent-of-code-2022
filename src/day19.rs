@@ -138,11 +138,27 @@ impl Ctx {
             self.max_geodes = self.max_geodes.max(state.geodes);
             return;
         }
-        let minutes_remaining = self.depth - state.tick;
+        let mut minutes_remaining = self.depth - state.tick;
+        // Assuming we manufacture an obsidian bot every turn, how long until we have enough for a
+        // geode bot?
+        // obsidian <= (first+last)*n/2 = (bot + (bot + t-1)) * t / 2
+        if state.geode_robots == 0 {
+            let mut obsidian_time = 0;
+            let mut obsidian = state.obsidian;
+            while obsidian < self.blueprint.geode.1 {
+                obsidian += state.obsidian_robots + obsidian_time;
+                obsidian_time += 1;
+            }
+            minutes_remaining = minutes_remaining - obsidian_time;
+            if minutes_remaining <= 0 {
+                return;
+            }
+        }
         let max_possible_geodes = state.geodes
             + (state.geode_robots * minutes_remaining)
             + ((minutes_remaining - 1) * minutes_remaining / 2);
-        if max_possible_geodes < self.max_geodes {
+        //println!("max possible geodes {}", max_possible_geodes);
+        if max_possible_geodes <= self.max_geodes {
             return;
         }
         if state.can_build(&self.blueprint, &Material::Geode) {
@@ -175,7 +191,6 @@ fn solve_1() -> u32 {
     let mut total_quality = 0;
     for blueprint in blueprints.iter() {
         let geodes = find_max_geodes(blueprint, 24);
-        println!("{:?} {}", blueprint, geodes);
         total_quality += blueprint.id * geodes;
     }
     total_quality
@@ -188,7 +203,6 @@ fn solve_2() -> u32 {
         .take(3)
         .map(|blueprint| {
             let g = find_max_geodes(blueprint, 32);
-            println!("{:?} -> {}", blueprint, g);
             g
         })
         .fold(1, u32::mul)
@@ -197,5 +211,5 @@ pub fn solve() {
     // runs in 81 seconds
     // also it's wrong :((((
     println!("{}", solve_1());
-    // println!("{}", solve_2());
+    println!("{}", solve_2());
 }
