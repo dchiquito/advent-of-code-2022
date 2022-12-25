@@ -1,5 +1,4 @@
 use regex::Regex;
-use std::ops::Add;
 use std::ops::Mul;
 
 use crate::advent;
@@ -12,7 +11,7 @@ enum Material {
     Geode,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct Blueprint {
     id: u32,
     ore: u32,
@@ -125,68 +124,51 @@ impl State {
             }
         }
     }
-    fn heuristic(&self, _blueprint: &Blueprint, depth: u32) -> u32 {
-        let ticks = depth - self.tick;
-        let geodes = self.geodes + (self.geode_robots * ticks) + (0..ticks).fold(0, u32::add);
-        geodes
+}
+
+// A holder for the recursion context
+struct Ctx {
+    blueprint: Blueprint,
+    depth: u32,
+    max_geodes: u32,
+}
+impl Ctx {
+    fn recurse(&mut self, state: &State) {
+        if state.tick == self.depth {
+            self.max_geodes = self.max_geodes.max(state.geodes);
+            return;
+        }
+        let minutes_remaining = self.depth - state.tick;
+        let max_possible_geodes = state.geodes
+            + (state.geode_robots * minutes_remaining)
+            + ((minutes_remaining - 1) * minutes_remaining / 2);
+        if max_possible_geodes < self.max_geodes {
+            return;
+        }
+        if state.can_build(&self.blueprint, &Material::Geode) {
+            self.recurse(&state.minute(&self.blueprint, &Some(Material::Geode)));
+        }
+        if state.can_build(&self.blueprint, &Material::Obsidian) {
+            self.recurse(&state.minute(&self.blueprint, &Some(Material::Obsidian)));
+        }
+        if state.can_build(&self.blueprint, &Material::Clay) {
+            self.recurse(&state.minute(&self.blueprint, &Some(Material::Clay)));
+        }
+        if state.can_build(&self.blueprint, &Material::Ore) {
+            self.recurse(&state.minute(&self.blueprint, &Some(Material::Ore)));
+        }
+        self.recurse(&state.minute(&self.blueprint, &None));
     }
 }
 
 fn find_max_geodes(blueprint: &Blueprint, depth: u32) -> u32 {
-    let max_ore_robots = blueprint
-        .ore
-        .max(blueprint.clay)
-        .max(blueprint.obsidian.0)
-        .max(blueprint.geode.0);
-    let max_clay_robots = blueprint.obsidian.1;
-    let max_obsidian_robots = blueprint.geode.1;
-    println!(
-        "{} {} {}",
-        max_ore_robots, max_clay_robots, max_obsidian_robots
-    );
-    let mut stack: Vec<State> = Vec::new();
-    stack.push(State::new());
-    let mut max_geodes = 0;
-    while let Some(state) = stack.pop() {
-        // println!("Stackin up {:?}", state);
-        if state.tick == depth {
-            max_geodes = max_geodes.max(state.geodes);
-            continue;
-        }
-        if state.heuristic(blueprint, depth) < max_geodes {
-            continue;
-        }
-        stack.push(state.minute(blueprint, &None));
-        for material in vec![
-            Material::Ore,
-            Material::Clay,
-            Material::Obsidian,
-            Material::Geode,
-        ] {
-            // don't bother with geodes if there are no obsidian bots
-            if (material == Material::Geode && state.obsidian_robots == 0) ||
-            // don't bother with obsidian if there are no clay bots or we already have enough
-            (material == Material::Obsidian
-                && (state.clay_robots == 0 || state.obsidian_robots >= max_obsidian_robots)) ||
-            // don't bother with clay if there are already enough
-            (material == Material::Clay && state.clay_robots >= max_clay_robots) || 
-            // don't bother with ore if there are already enough
-            (material == Material::Ore && state.ore_robots >= max_ore_robots) {
-                break;
-            }
-            let mut temp_state = state.clone();
-            // wait until the material is buildable
-            while !temp_state.can_build(blueprint, &material) {
-                temp_state = temp_state.minute(blueprint, &None);
-            }
-            temp_state = temp_state.minute(blueprint, &Some(material));
-            // check to make sure we haven't waited until after the max depth
-            if temp_state.tick <= depth {
-                stack.push(temp_state);
-            }
-        }
-    }
-    max_geodes
+    let mut ctx = Ctx {
+        blueprint: blueprint.clone(),
+        depth,
+        max_geodes: 0,
+    };
+    ctx.recurse(&State::new());
+    ctx.max_geodes
 }
 fn solve_1() -> u32 {
     let blueprints = read_blueprints();
@@ -199,7 +181,7 @@ fn solve_1() -> u32 {
     total_quality
 }
 
-fn _solve_2() -> u32 {
+fn solve_2() -> u32 {
     let blueprints = read_blueprints();
     blueprints
         .iter()
